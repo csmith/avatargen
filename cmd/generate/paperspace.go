@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -17,20 +18,28 @@ var (
 
 func launchMachine() {
 	log.Printf("Launching paperspace machine %s", *paperspaceMachine)
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("https://api.paperspace.io/machines/%s/start", *paperspaceMachine), nil)
-	req.Header.Add("X-Api-Key", *paperspaceKey)
-	_, err := http.DefaultClient.Do(req)
+	req, _ := http.NewRequest(http.MethodPatch, fmt.Sprintf("https://api.paperspace.com/v1/machines/%s/start", *paperspaceMachine), nil)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", *paperspaceKey))
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		panic(err)
 	}
+
+	defer res.Body.Close()
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Printf("Response from launching: %s", b)
 
 	waitForMachine()
 }
 
 func stopMachine() {
 	log.Printf("Stopping paperspace machine %s", *paperspaceMachine)
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("https://api.paperspace.io/machines/%s/stop", *paperspaceMachine), nil)
-	req.Header.Add("X-Api-Key", *paperspaceKey)
+	req, _ := http.NewRequest(http.MethodPatch, fmt.Sprintf("https://api.paperspace.com/v1/machines/%s/stop", *paperspaceMachine), nil)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", *paperspaceKey))
 	_, err := http.DefaultClient.Do(req)
 	if err != nil {
 		panic(err)
@@ -43,15 +52,23 @@ func waitForMachine() {
 	}
 
 	for i := 0; i < 30; i++ {
-		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("https://api.paperspace.io/machines/getMachinePublic?machineId=%s", *paperspaceMachine), nil)
-		req.Header.Add("X-Api-Key", *paperspaceKey)
+		req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("https://api.paperspace.com/v1/machines/%s", *paperspaceMachine), nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", *paperspaceKey))
 		res, err := http.DefaultClient.Do(req)
 		if err != nil {
 			panic(err)
 		}
+
 		defer res.Body.Close()
+		b, err := io.ReadAll(res.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Printf("Response from get machine: %s", b)
+
 		status := info{}
-		if err := json.NewDecoder(res.Body).Decode(&status); err != nil {
+		if err := json.Unmarshal(b, &status); err != nil {
 			panic(err)
 		}
 
