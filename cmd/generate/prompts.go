@@ -10,10 +10,14 @@ var prefixes = []string{
 	"A painting",
 	"A watercolour painting",
 	"An impressionist painting",
-	"A photograph portrait",
+	"A photographic portrait",
 	"A drawing",
 	"A sketch",
 	"An illustration",
+	"A photograph",
+	"A digital sketch",
+	"A photorealistic picture",
+	"A computer render",
 }
 
 var artists = []string{
@@ -113,6 +117,13 @@ var films = []string{
 	"James Bond",
 	"Jurassic Park",
 	"Blade Runner",
+	"The Simpsons",
+	"Futurama",
+	"Dune",
+	"Star Trek The Next Generation",
+	"Star Trek Voyager",
+	"Star Trek Deep Space Nine",
+	"The Lion King",
 }
 
 var suffixes = []string{
@@ -138,6 +149,18 @@ var suffixes = []string{
 	"highly detailed",
 	"pencil and paper",
 	"charcoal on paper",
+	"trading card foil",
+	"prize winning",
+	"board game art",
+	"video game screenshot",
+	"cinestill",
+	"back light",
+	"studio light",
+	"natural framing",
+	"soft focus",
+	"technicolor",
+	"asymmetrical composition",
+	"extreme tonal balance",
 }
 
 const subject = "cjs"
@@ -146,8 +169,8 @@ func Prompt() string {
 	prefix := prefixes[rand.Intn(len(prefixes))]
 	extraCount := 1 + rand.Intn(2) + rand.Intn(3) + rand.Intn(4)
 	r := rand.Intn(100)
-	useArtist := r > 20
-	useFilm := r < 25
+	useArtist := r > 40
+	useFilm := r < 30
 
 	var trailing []string
 
