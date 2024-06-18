@@ -77,22 +77,17 @@ func generateBatch(targets []string) {
 	launchMachine()
 	defer stopMachine()
 
-	first := true
-
-	guard := make(chan struct{}, 10)
+	guard := make(chan struct{}, 4)
 	for t := range targets {
 		guard <- struct{}{}
 		go func(t int) {
 			prompt := Prompt()
 			image, err := Generate(*sdUrl, prompt)
 			if err != nil {
-				if first {
-					for j := 0; j < 12 && err != nil; j++ {
-						log.Printf("First request failed: %v, sleeping and trying again", err)
-						time.Sleep(time.Second * 10)
-						image, err = Generate(*sdUrl, prompt)
-					}
-					first = false
+				for j := 0; j < 10 && err != nil; j++ {
+					log.Printf("Request failed: %v, sleeping and trying again", err)
+					time.Sleep(time.Second)
+					image, err = Generate(*sdUrl, prompt)
 				}
 				if err != nil {
 					panic(err)
