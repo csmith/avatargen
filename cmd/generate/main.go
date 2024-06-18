@@ -79,28 +79,33 @@ func generateBatch(targets []string) {
 
 	first := true
 
+	guard := make(chan struct{}, 10)
 	for t := range targets {
-		prompt := Prompt()
-		image, err := Generate(*sdUrl, prompt)
-		if err != nil {
-			if first {
-				for j := 0; j < 12 && err != nil; j++ {
-					log.Printf("First request failed: %v, sleeping and trying again", err)
-					time.Sleep(time.Second * 10)
-					image, err = Generate(*sdUrl, prompt)
+		guard <- struct{}{}
+		go func(t int) {
+			prompt := Prompt()
+			image, err := Generate(*sdUrl, prompt)
+			if err != nil {
+				if first {
+					for j := 0; j < 12 && err != nil; j++ {
+						log.Printf("First request failed: %v, sleeping and trying again", err)
+						time.Sleep(time.Second * 10)
+						image, err = Generate(*sdUrl, prompt)
+					}
+					first = false
 				}
-				first = false
+				if err != nil {
+					panic(err)
+				}
 			}
+
+			err = os.WriteFile(targets[t], image, os.FileMode(0755))
 			if err != nil {
 				panic(err)
 			}
-		}
 
-		err = os.WriteFile(targets[t], image, os.FileMode(0755))
-		if err != nil {
-			panic(err)
-		}
-
-		log.Printf("Generated %s with prompt: %s", targets[t], prompt)
+			log.Printf("Generated %s with prompt: %s", targets[t], prompt)
+			<-guard
+		}(t)
 	}
 }
