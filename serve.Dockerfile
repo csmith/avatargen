@@ -1,4 +1,4 @@
-FROM golang:1.21 AS build
+FROM reg.c5h.io/golang AS build
 
 WORKDIR /go/src/app
 
@@ -6,10 +6,10 @@ COPY . .
 RUN GO111MODULE=on go install ./cmd/serve
 RUN mkdir /images /uniques
 
-FROM gcr.io/distroless/base:nonroot
+FROM reg.c5h.io/base-glibc
 COPY --from=build /go/bin/serve /serve
-COPY --from=build --chown=nonroot /images /images
-COPY --from=build --chown=nonroot /uniques /uniques
+COPY --from=build --chown=65532 /images /images
+COPY --from=build --chown=65532 /uniques /uniques
 
 VOLUME /images
 VOLUME /uniques
